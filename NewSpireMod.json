@@ -1,0 +1,14 @@
+﻿{
+  "id": "NewSpireMod",
+  "name": "火堆更加忙碌",
+  "author": "Player",
+  "description": "围绕营火行为与营火遗物扩展的《杀戮尖塔 2》Mod。当前为第一阶段测试版。",
+  "version": "v0.1.0-alpha",
+  "min_game_version": "0.107.0",
+  "has_pck": false,
+  "has_dll": true,
+  "dependencies": [
+    {"id": "BaseLib", "min_version": "3.3.8"}
+  ],
+  "affects_gameplay": true
+}
