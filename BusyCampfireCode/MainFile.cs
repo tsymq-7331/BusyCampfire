@@ -6,6 +6,7 @@ using BaseLib.Config;
 using BusyCampfire.BusyCampfireCode.Config;
 using BusyCampfire.BusyCampfireCode.Modules;
 using BusyCampfire.BusyCampfireCode.Runtime;
+using BusyCampfire.BusyCampfireCode.Relics;
 using BusyCampfire.BusyCampfireCode.Ui;
 
 namespace BusyCampfire.BusyCampfireCode;
@@ -26,6 +27,8 @@ public partial class MainFile : Node
         //If you want to use scripts defined in your mod for Godot scenes, uncomment the following line.
         //Godot.Bridge.ScriptManagerBridge.LookupScriptsInAssembly(Assembly.GetExecutingAssembly());
      
+        _ = new ForgingHammer();
+        _ = new ForgingHammerPool();
         ModConfig.Load<SpireConfig>();
         RuntimeMode = new RuntimeModeCoordinator();
         Modules = new ModuleManager(RuntimeMode);
