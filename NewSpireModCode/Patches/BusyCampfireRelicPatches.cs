@@ -13,25 +13,36 @@ namespace NewSpireMod.NewSpireModCode.Patches;
 /// </summary>
 internal static class BusyCampfireRelicPatches
 {
+    private static bool Enabled => MainFile.IsInitialized && MainFile.RuntimeMode.GameplayChangesAllowed;
+
     [HarmonyPatch(typeof(VenerableTeaSet), "get_CanonicalVars")]
     private static class VenerableTeaSetVarsPatch
     {
-        private static void Postfix(ref IEnumerable<DynamicVar> __result) =>
-            __result = [new EnergyVar(3)];
+        private static void Postfix(ref IEnumerable<DynamicVar> __result)
+        {
+            if (Enabled)
+                __result = [new EnergyVar(3)];
+        }
     }
 
     [HarmonyPatch(typeof(FakeVenerableTeaSet), "get_CanonicalVars")]
     private static class FakeVenerableTeaSetVarsPatch
     {
-        private static void Postfix(ref IEnumerable<DynamicVar> __result) =>
-            __result = [new EnergyVar(2)];
+        private static void Postfix(ref IEnumerable<DynamicVar> __result)
+        {
+            if (Enabled)
+                __result = [new EnergyVar(2)];
+        }
     }
 
     [HarmonyPatch(typeof(EternalFeather), "get_CanonicalVars")]
     private static class EternalFeatherVarsPatch
     {
-        private static void Postfix(ref IEnumerable<DynamicVar> __result) =>
-            __result = [new CardsVar(5), new HealVar(5m)];
+        private static void Postfix(ref IEnumerable<DynamicVar> __result)
+        {
+            if (Enabled)
+                __result = [new CardsVar(5), new HealVar(5m)];
+        }
     }
 
     [HarmonyPatch(typeof(Girya), nameof(Girya.TryModifyRestSiteOptions))]
@@ -43,7 +54,7 @@ internal static class BusyCampfireRelicPatches
             ICollection<RestSiteOption> options,
             ref bool __result)
         {
-            if (player != __instance.Owner || options.Any(option => option is LiftRestSiteOption))
+            if (!Enabled || player != __instance.Owner || options.Any(option => option is LiftRestSiteOption))
                 return;
 
             options.Add(new LiftRestSiteOption(player));
