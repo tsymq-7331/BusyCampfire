@@ -3,7 +3,7 @@
   "name": "火堆更加忙碌",
   "author": "Player",
   "description": "围绕营火行为与营火遗物扩展的《杀戮尖塔 2》Mod。当前为第一阶段测试版。",
-  "version": "v0.2.0-alpha",
+  "version": "v0.3.0-alpha",
   "min_game_version": "0.107.0",
   "has_pck": false,
   "has_dll": true,
