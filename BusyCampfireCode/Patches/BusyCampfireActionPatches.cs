@@ -17,7 +17,7 @@ namespace BusyCampfire.BusyCampfireCode.Patches;
 /// </summary>
 internal static class BusyCampfireActionPatches
 {
-    private static readonly Dictionary<Player, int> CloneUses = [];
+    private static readonly Dictionary<Player, CloneUseState> CloneUses = [];
     private static bool Enabled => MainFile.IsInitialized && MainFile.RuntimeMode.GameplayChangesAllowed;
 
     [HarmonyPatch(typeof(RestSiteOption), nameof(RestSiteOption.Generate))]
@@ -27,8 +27,6 @@ internal static class BusyCampfireActionPatches
         {
             if (!Enabled)
                 return;
-
-            CloneUses[player] = 0;
 
             for (int index = 0; index < __result.Count; index++)
             {
@@ -41,7 +39,7 @@ internal static class BusyCampfireActionPatches
     private sealed class LimitedCloneRestSiteOption(Player owner) : CloneRestSiteOption(owner)
     {
         public override bool IsEnabled =>
-            GetUses(Owner) < Math.Max(1, SpireConfig.CloneUsesPerCampfire);
+            GetState(Owner).Uses < Math.Max(1, SpireConfig.CloneUsesPerCampfire);
 
         public override async Task<bool> OnSelect()
         {
@@ -50,13 +48,33 @@ internal static class BusyCampfireActionPatches
 
             bool succeeded = await base.OnSelect();
             if (succeeded)
-                CloneUses[Owner] = GetUses(Owner) + 1;
+            {
+                CloneUseState state = GetState(Owner);
+                CloneUses[Owner] = state with { Uses = state.Uses + 1 };
+            }
             return succeeded;
         }
     }
 
-    private static int GetUses(Player player) =>
-        CloneUses.TryGetValue(player, out int uses) ? uses : 0;
+    private static CloneUseState GetState(Player player)
+    {
+        CloneUseState current = new(
+            player.RunState.CurrentActIndex,
+            player.RunState.TotalFloor,
+            Uses: 0);
+
+        if (!CloneUses.TryGetValue(player, out CloneUseState saved) ||
+            saved.ActIndex != current.ActIndex ||
+            saved.TotalFloor != current.TotalFloor)
+        {
+            CloneUses[player] = current;
+            return current;
+        }
+
+        return saved;
+    }
+
+    private readonly record struct CloneUseState(int ActIndex, int TotalFloor, int Uses);
 }
 
 /// <summary>

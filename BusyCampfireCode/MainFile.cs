@@ -5,6 +5,7 @@ using MegaCrit.Sts2.Core.Nodes;
 using BaseLib.Config;
 using BusyCampfire.BusyCampfireCode.Config;
 using BusyCampfire.BusyCampfireCode.Modules;
+using BusyCampfire.BusyCampfireCode.Patches;
 using BusyCampfire.BusyCampfireCode.Runtime;
 using BusyCampfire.BusyCampfireCode.Relics;
 using BusyCampfire.BusyCampfireCode.Ui;
@@ -29,6 +30,7 @@ public partial class MainFile : Node
      
         _ = new ForgingHammer();
         _ = new ForgingHammerPool();
+        BusyCampfireHatchPatches.RegisterSaveFields();
         ModConfig.Load<SpireConfig>();
         RuntimeMode = new RuntimeModeCoordinator();
         Modules = new ModuleManager(RuntimeMode);
