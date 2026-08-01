@@ -30,7 +30,7 @@ internal static class BusyCampfireHatchPatches
     {
         private static void Postfix(CardPile __instance, CardModel card)
         {
-            if (!Enabled || __instance.Type != PileType.Deck || card is not ByrdonisEgg)
+            if (!Enabled || __instance.Type != PileType.Deck || card is not ByrdonisEgg || card.Owner == null)
                 return;
 
             HatchMultiplier[card.Owner] = CountEggs(card.Owner);
@@ -42,7 +42,7 @@ internal static class BusyCampfireHatchPatches
     {
         private static void Prefix(CardPile __instance, CardModel card)
         {
-            if (!Enabled || __instance.Type != PileType.Deck || card is not ByrdonisEgg)
+            if (!Enabled || __instance.Type != PileType.Deck || card is not ByrdonisEgg || card.Owner == null)
                 return;
 
             int countBeforeRemoval = CountEggs(card.Owner);
