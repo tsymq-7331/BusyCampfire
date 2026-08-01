@@ -46,6 +46,7 @@ internal static class BusyCampfireMendPatches
         }
 
         List<Reward> rewards = [];
+        owner.GetRelic<StoneHumidifier>()?.TryModifyRestSiteHealRewards(owner, rewards, isMimicked: false);
         owner.GetRelic<TinyMailbox>()?.TryModifyRestSiteHealRewards(owner, rewards, isMimicked: false);
         owner.GetRelic<DreamCatcher>()?.TryModifyRestSiteHealRewards(owner, rewards, isMimicked: false);
 
