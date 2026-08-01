@@ -3,7 +3,6 @@ using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.Entities.RestSite;
 using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Models.Relics;
-using System.Text.RegularExpressions;
 
 namespace BusyCampfire.BusyCampfireCode.Patches;
 
@@ -63,13 +62,4 @@ internal static class BusyCampfireRelicPatches
         }
     }
 
-    [HarmonyPatch(typeof(Girya), "get_Description")]
-    private static class UnlimitedGiryaDescriptionPatch
-    {
-        private static void Postfix(ref string __result)
-        {
-            if (Enabled)
-                __result = Regex.Replace(__result, @"\s*[（(][^（）()]*3[^（）()]*[）)]", string.Empty);
-        }
-    }
 }
