@@ -1,10 +1,12 @@
 using BaseLib.Abstracts;
+using BaseLib.Utils;
 using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
 
 namespace BusyCampfire.BusyCampfireCode.Relics;
 
+[Pool(typeof(ForgingHammerPool))]
 public sealed class ForgingHammer : CustomRelicModel
 {
     public override RelicRarity Rarity => RelicRarity.Shop;
