@@ -7,6 +7,7 @@ using MegaCrit.Sts2.Core.Events;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Events;
 using MegaCrit.Sts2.Core.Models.Relics;
+using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Random;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
@@ -21,7 +22,8 @@ namespace BusyCampfire.BusyCampfireCode.Patches;
 /// </summary>
 internal static class BusyCampfireDigPatches
 {
-    private static readonly ConditionalWeakTable<DigRestSiteOption, EventModel> PendingEvents = new();
+    private static readonly Dictionary<int, EventModel> PendingEvents = [];
+    private static readonly ConditionalWeakTable<Player, ShovelEventState> VisitedShovelEvents = new();
 
     private static bool Enabled =>
         MainFile.IsInitialized &&
@@ -38,14 +40,29 @@ internal static class BusyCampfireDigPatches
         }
     }
 
-    [HarmonyPatch(typeof(DigRestSiteOption), nameof(DigRestSiteOption.DoLocalPostSelectVfx))]
-    private static class DigLocalVfxPatch
+    [HarmonyPatch(typeof(RestSiteSynchronizer), "AfterAllRestSitesCompleted")]
+    private static class RestSiteCompletionPatch
     {
-        private static void Postfix(DigRestSiteOption __instance, ref Task __result)
+        private static void Postfix(ref Task __result)
         {
-            if (Enabled && PendingEvents.TryGetValue(__instance, out EventModel? selectedEvent))
-                __result = CompleteVfxAndEnterEvent(__instance, selectedEvent, __result);
+            if (!Enabled || PendingEvents.Count == 0)
+            {
+                return;
+            }
+
+            List<EventModel> events = PendingEvents
+                .OrderBy(pair => pair.Key)
+                .Select(pair => pair.Value)
+                .ToList();
+            PendingEvents.Clear();
+            __result = CompleteRestSiteAndEnterEvents(__result, events);
         }
+    }
+
+    [HarmonyPatch(typeof(RunManager), nameof(RunManager.CleanUp))]
+    private static class RunCleanupPatch
+    {
+        private static void Postfix() => PendingEvents.Clear();
     }
 
     private static async Task<bool> CompleteAndChooseEvent(
@@ -63,10 +80,20 @@ internal static class BusyCampfireDigPatches
         if (owner.RunState.Players.Count > 1 && !SpireConfig.EnableDigEventsInMultiplayer)
             return true;
 
+        ShovelEventState shovelState = GetShovelState(owner);
         List<EventModel> candidates = runState.Act.AllEvents
             .Where(eventModel => IsEligible(eventModel, runState))
+            .Where(eventModel => !shovelState.VisitedIds.Contains(eventModel.Id.Entry))
             .OrderBy(eventModel => eventModel.Id.Entry, StringComparer.Ordinal)
             .ToList();
+        if (candidates.Count == 0 && shovelState.VisitedIds.Count > 0)
+        {
+            shovelState.VisitedIds.Clear();
+            candidates = runState.Act.AllEvents
+                .Where(eventModel => IsEligible(eventModel, runState))
+                .OrderBy(eventModel => eventModel.Id.Entry, StringComparer.Ordinal)
+                .ToList();
+        }
         if (candidates.Count == 0)
             return true;
 
@@ -75,23 +102,36 @@ internal static class BusyCampfireDigPatches
         Rng rng = new(owner, ModelDb.Relic<Shovel>().Id, mixin);
         EventModel selectedEvent = candidates[rng.NextInt(candidates.Count)];
 
-        runState.AddVisitedEvent(selectedEvent);
+        shovelState.VisitedIds.Add(selectedEvent.Id.Entry);
         CampfireTestLog.Write(owner, "Dig/挖掘", $"Event={selectedEvent.Id.Entry}, Candidates={candidates.Count}");
-        PendingEvents.Remove(option);
-        PendingEvents.Add(option, selectedEvent);
+        int playerIndex = runState.Players.ToList().IndexOf(owner);
+        PendingEvents[playerIndex] = selectedEvent;
         return true;
     }
 
-    private static async Task CompleteVfxAndEnterEvent(
-        DigRestSiteOption option,
-        EventModel selectedEvent,
-        Task originalVfx)
+    private static async Task CompleteRestSiteAndEnterEvents(
+        Task originalCompletion,
+        IReadOnlyList<EventModel> events)
     {
-        await originalVfx;
-        PendingEvents.Remove(option);
-        await RunManager.Instance.EnterRoomWithoutExitingCurrentRoom(
-            new EventRoom(selectedEvent),
-            fadeToBlack: true);
+        await originalCompletion;
+        foreach (EventModel selectedEvent in events)
+        {
+            await RunManager.Instance.EnterRoomWithoutExitingCurrentRoom(
+                new EventRoom(selectedEvent),
+                fadeToBlack: true);
+        }
+    }
+
+    private static ShovelEventState GetShovelState(Player player)
+    {
+        ShovelEventState state = VisitedShovelEvents.GetOrCreateValue(player);
+        if (state.ActIndex != player.RunState.CurrentActIndex)
+        {
+            state.ActIndex = player.RunState.CurrentActIndex;
+            state.VisitedIds.Clear();
+        }
+
+        return state;
     }
 
     private static bool IsEligible(EventModel eventModel, RunState runState)
@@ -100,7 +140,7 @@ internal static class BusyCampfireDigPatches
             return false;
         if (eventModel.IsShared || eventModel.LayoutType == EventLayoutType.Combat || eventModel.CanonicalEncounter != null)
             return false;
-        if (runState.VisitedEventIds.Contains(eventModel.Id) || !eventModel.IsAllowed(runState))
+        if (!eventModel.IsAllowed(runState))
             return false;
         if (!runState.UnlockState.IsEpochRevealed<Event1Epoch>() && Event1Epoch.Events.Any(e => e.Id == eventModel.Id))
             return false;
@@ -109,5 +149,11 @@ internal static class BusyCampfireDigPatches
         if (!runState.UnlockState.IsEpochRevealed<Event3Epoch>() && Event3Epoch.Events.Any(e => e.Id == eventModel.Id))
             return false;
         return true;
+    }
+
+    private sealed class ShovelEventState
+    {
+        internal int ActIndex { get; set; } = -1;
+        internal HashSet<string> VisitedIds { get; } = [];
     }
 }
