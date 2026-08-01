@@ -7,6 +7,7 @@ using MegaCrit.Sts2.Core.Entities.RestSite;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Cards;
 using MegaCrit.Sts2.Core.Models.Relics;
+using BusyCampfire.BusyCampfireCode.Diagnostics;
 
 namespace BusyCampfire.BusyCampfireCode.Patches;
 
@@ -119,6 +120,7 @@ internal static class BusyCampfireHatchPatches
 
             HatchMultiplier[Owner] = multiplier;
             MarkUsedHere(Owner);
+            CampfireTestLog.Write(Owner, "Hatch/孵化", $"Multiplier={multiplier}, LiveEggs={eggs.Count}, AddedCards={addedCards.Count}");
             return true;
         }
     }

@@ -11,6 +11,7 @@ using MegaCrit.Sts2.Core.Random;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Timeline.Epochs;
+using BusyCampfire.BusyCampfireCode.Diagnostics;
 
 namespace BusyCampfire.BusyCampfireCode.Patches;
 
@@ -82,6 +83,7 @@ internal static class BusyCampfireDigPatches
         EventModel selectedEvent = candidates[rng.NextInt(candidates.Count)];
 
         runState.AddVisitedEvent(selectedEvent);
+        CampfireTestLog.Write(owner, "Dig/挖掘", $"Event={selectedEvent.Id.Entry}, Candidates={candidates.Count}");
         PendingEvents.Remove(option);
         PendingEvents.Add(option, selectedEvent);
         return true;

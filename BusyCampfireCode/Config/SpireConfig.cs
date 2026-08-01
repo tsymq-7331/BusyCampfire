@@ -37,6 +37,7 @@ internal sealed class SpireConfig : SimpleModConfig
     public static double TinyTentShopWeightMultiplier { get; set; } = 3.0;
     public static bool EnableDigEvents { get; set; } = true;
     public static bool EnableDigEventsInMultiplayer { get; set; } = true;
+    public static bool EnableDetailedTestLogs { get; set; } = true;
 
     [ConfigSection("VisualEffects")]
     public static bool EnhancedEffects { get; set; } = true;

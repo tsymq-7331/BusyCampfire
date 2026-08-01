@@ -5,6 +5,7 @@ using MegaCrit.Sts2.Core.Entities.RestSite;
 using MegaCrit.Sts2.Core.Models.Relics;
 using MegaCrit.Sts2.Core.Rewards;
 using MegaCrit.Sts2.Core.Rooms;
+using BusyCampfire.BusyCampfireCode.Diagnostics;
 
 namespace BusyCampfire.BusyCampfireCode.Patches;
 
@@ -52,6 +53,13 @@ internal static class BusyCampfireMendPatches
 
         if (rewards.Count > 0)
             await RewardsCmd.OfferCustom(owner, rewards);
+
+        List<string> triggered = [];
+        if (pillow != null) triggered.Add("RegalPillow");
+        if (owner.GetRelic<StoneHumidifier>() != null) triggered.Add("StoneHumidifier(+5 Max HP)");
+        if (owner.GetRelic<TinyMailbox>() != null) triggered.Add("TinyMailbox");
+        if (owner.GetRelic<DreamCatcher>() != null) triggered.Add("DreamCatcher");
+        CampfireTestLog.Write(owner, "Mend/治疗队友", $"Triggered=[{string.Join(", ", triggered)}], Rewards={rewards.Count}");
 
         return true;
     }

@@ -6,6 +6,7 @@ using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.RestSite;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Enchantments;
+using BusyCampfire.BusyCampfireCode.Diagnostics;
 
 namespace BusyCampfire.BusyCampfireCode.Patches;
 
@@ -57,7 +58,10 @@ internal static class ForgingHammerPatches
                 ? MultiEnchantmentCompatibility.TryEnchant(card, chosen)
                 : ApplyVanillaEnchantment(card, chosen);
             if (applied)
+            {
                 hammer.Flash();
+                CampfireTestLog.Write(owner, "ForgingHammer/锻造锤", $"Card={card.Id.Entry}, Enchantment={chosen.Id.Entry}, Multi={alreadyEnchanted}");
+            }
         }
 
         return true;
