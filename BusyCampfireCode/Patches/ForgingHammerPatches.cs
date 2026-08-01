@@ -1,3 +1,4 @@
+using BusyCampfire.BusyCampfireCode.Compatibility;
 using BusyCampfire.BusyCampfireCode.Relics;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Commands;
@@ -39,20 +40,32 @@ internal static class ForgingHammerPatches
 
         foreach (CardModel card in selection ?? [])
         {
-            if (card.Enchantment != null)
+            bool alreadyEnchanted = card.Enchantment != null;
+            if (alreadyEnchanted && !MultiEnchantmentCompatibility.IsAvailable)
                 continue;
 
+            HashSet<Type> attachedTypes = MultiEnchantmentCompatibility.GetAttachedEnchantmentTypes(card);
             List<EnchantmentModel> candidates = CreateVanillaCandidates()
+                .Where(enchantment => !attachedTypes.Contains(enchantment.GetType()))
                 .Where(enchantment => enchantment.CanEnchant(card))
                 .ToList();
             if (candidates.Count == 0)
                 continue;
 
             EnchantmentModel chosen = candidates[owner.RunState.Rng.Niche.NextInt(candidates.Count)];
-            CardCmd.Enchant(chosen, card, 1);
-            hammer.Flash();
+            bool applied = alreadyEnchanted
+                ? MultiEnchantmentCompatibility.TryEnchant(card, chosen)
+                : ApplyVanillaEnchantment(card, chosen);
+            if (applied)
+                hammer.Flash();
         }
 
+        return true;
+    }
+
+    private static bool ApplyVanillaEnchantment(CardModel card, EnchantmentModel enchantment)
+    {
+        CardCmd.Enchant(enchantment, card, 1);
         return true;
     }
 
