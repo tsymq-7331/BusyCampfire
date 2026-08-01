@@ -10,8 +10,8 @@ internal sealed class SpireConfig : SimpleModConfig
 {
     [ConfigSection("General")]
     public static bool EnableMod { get; set; } = true;
-    public static bool PreferVanillaCompatibleMultiplayer { get; set; } = true;
-    public static bool EnableSynchronizedGameplayInMultiplayer { get; set; }
+    public static bool PreferVanillaCompatibleMultiplayer { get; set; }
+    public static bool EnableSynchronizedGameplayInMultiplayer { get; set; } = true;
     public static bool ShowRuntimeMode { get; set; } = true;
 
     [ConfigSection("CombatInfo")]

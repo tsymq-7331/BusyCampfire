@@ -22,13 +22,10 @@ internal static class RunModePatches
         }
         else
         {
-            // Full multiplayer gameplay changes are deliberately opt-in.
-            // The default is client-only behavior, which requires no peer mod.
-            bool fullModeExplicitlyEnabled =
-                !SpireConfig.PreferVanillaCompatibleMultiplayer &&
-                SpireConfig.EnableSynchronizedGameplayInMultiplayer;
-
-            MainFile.RuntimeMode.EnterMultiplayer(fullModeExplicitlyEnabled);
+            // BusyCampfire declares affects_gameplay, so the game already requires every
+            // multiplayer peer to load the same mod version. A second compatibility gate
+            // here would disable every campfire patch even in a fully matched lobby.
+            MainFile.RuntimeMode.EnterMultiplayer(everyPeerConfirmedCompatible: true);
         }
 
         MainFile.Modules.NotifyModeChanged();

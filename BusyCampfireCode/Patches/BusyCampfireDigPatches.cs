@@ -60,15 +60,8 @@ internal static class BusyCampfireDigPatches
         if (owner.RunState is not RunState runState)
             return true;
 
-        // A non-shared EventRoom still creates an event model for every player.
-        // Until a player-scoped synchronizer exists, do not risk granting the
-        // event to teammates.
-        if (owner.RunState.Players.Count > 1)
-        {
-            if (SpireConfig.EnableDigEventsInMultiplayer)
-                MainFile.Logger.Warn("Skipped Shovel bonus event: player-scoped multiplayer synchronization is not available yet.");
+        if (owner.RunState.Players.Count > 1 && !SpireConfig.EnableDigEventsInMultiplayer)
             return true;
-        }
 
         List<EventModel> candidates = runState.Act.AllEvents
             .Where(eventModel => IsEligible(eventModel, runState))
