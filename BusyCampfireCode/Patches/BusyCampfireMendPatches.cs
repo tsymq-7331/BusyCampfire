@@ -46,8 +46,11 @@ internal static class BusyCampfireMendPatches
             await pillow.AfterRestSiteHeal(owner, isMimicked: false);
         }
 
+        StoneHumidifier? humidifier = owner.GetRelic<StoneHumidifier>();
+        if (humidifier != null)
+            await humidifier.AfterRestSiteHeal(owner, isMimicked: false);
+
         List<Reward> rewards = [];
-        owner.GetRelic<StoneHumidifier>()?.TryModifyRestSiteHealRewards(owner, rewards, isMimicked: false);
         owner.GetRelic<TinyMailbox>()?.TryModifyRestSiteHealRewards(owner, rewards, isMimicked: false);
         owner.GetRelic<DreamCatcher>()?.TryModifyRestSiteHealRewards(owner, rewards, isMimicked: false);
 
@@ -56,7 +59,7 @@ internal static class BusyCampfireMendPatches
 
         List<string> triggered = [];
         if (pillow != null) triggered.Add("RegalPillow");
-        if (owner.GetRelic<StoneHumidifier>() != null) triggered.Add("StoneHumidifier(+5 Max HP)");
+        if (humidifier != null) triggered.Add("StoneHumidifier(+5 Max HP)");
         if (owner.GetRelic<TinyMailbox>() != null) triggered.Add("TinyMailbox");
         if (owner.GetRelic<DreamCatcher>() != null) triggered.Add("DreamCatcher");
         CampfireTestLog.Write(owner, "Mend/治疗队友", $"Triggered=[{string.Join(", ", triggered)}], Rewards={rewards.Count}");

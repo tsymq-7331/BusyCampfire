@@ -22,7 +22,7 @@ namespace BusyCampfire.BusyCampfireCode.Patches;
 /// </summary>
 internal static class BusyCampfireDigPatches
 {
-    private static readonly Dictionary<int, EventModel> PendingEvents = [];
+    private static EventModel? PendingEvent;
     private static readonly ConditionalWeakTable<Player, ShovelEventState> VisitedShovelEvents = new();
 
     private static bool Enabled =>
@@ -45,24 +45,21 @@ internal static class BusyCampfireDigPatches
     {
         private static void Postfix(ref Task __result)
         {
-            if (!Enabled || PendingEvents.Count == 0)
+            if (!Enabled || PendingEvent == null)
             {
                 return;
             }
 
-            List<EventModel> events = PendingEvents
-                .OrderBy(pair => pair.Key)
-                .Select(pair => pair.Value)
-                .ToList();
-            PendingEvents.Clear();
-            __result = CompleteRestSiteAndEnterEvents(__result, events);
+            EventModel selectedEvent = PendingEvent;
+            PendingEvent = null;
+            __result = CompleteRestSiteAndEnterEvent(__result, selectedEvent);
         }
     }
 
     [HarmonyPatch(typeof(RunManager), nameof(RunManager.CleanUp))]
     private static class RunCleanupPatch
     {
-        private static void Postfix() => PendingEvents.Clear();
+        private static void Postfix() => PendingEvent = null;
     }
 
     private static async Task<bool> CompleteAndChooseEvent(
@@ -104,22 +101,18 @@ internal static class BusyCampfireDigPatches
 
         shovelState.VisitedIds.Add(selectedEvent.Id.Entry);
         CampfireTestLog.Write(owner, "Dig/挖掘", $"Event={selectedEvent.Id.Entry}, Candidates={candidates.Count}");
-        int playerIndex = runState.Players.ToList().IndexOf(owner);
-        PendingEvents[playerIndex] = selectedEvent;
+        PendingEvent ??= selectedEvent;
         return true;
     }
 
-    private static async Task CompleteRestSiteAndEnterEvents(
+    private static async Task CompleteRestSiteAndEnterEvent(
         Task originalCompletion,
-        IReadOnlyList<EventModel> events)
+        EventModel selectedEvent)
     {
         await originalCompletion;
-        foreach (EventModel selectedEvent in events)
-        {
-            await RunManager.Instance.EnterRoomWithoutExitingCurrentRoom(
-                new EventRoom(selectedEvent),
-                fadeToBlack: true);
-        }
+        await RunManager.Instance.EnterRoomWithoutExitingCurrentRoom(
+            new EventRoom(selectedEvent),
+            fadeToBlack: true);
     }
 
     private static ShovelEventState GetShovelState(Player player)
