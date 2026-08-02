@@ -1,14 +1,11 @@
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Modding;
-using MegaCrit.Sts2.Core.Nodes;
 using BaseLib.Config;
 using BusyCampfire.BusyCampfireCode.Config;
-using BusyCampfire.BusyCampfireCode.Modules;
 using BusyCampfire.BusyCampfireCode.Patches;
 using BusyCampfire.BusyCampfireCode.Runtime;
 using BusyCampfire.BusyCampfireCode.Relics;
-using BusyCampfire.BusyCampfireCode.Ui;
 
 namespace BusyCampfire.BusyCampfireCode;
 
@@ -20,7 +17,6 @@ public partial class MainFile : Node
 
     public static MegaCrit.Sts2.Core.Logging.Logger Logger { get; } = new(ModId, MegaCrit.Sts2.Core.Logging.LogType.Generic);
     internal static RuntimeModeCoordinator RuntimeMode { get; private set; } = null!;
-    internal static ModuleManager Modules { get; private set; } = null!;
     internal static bool IsInitialized { get; private set; }
 
     public static void Initialize()
@@ -30,17 +26,12 @@ public partial class MainFile : Node
      
         _ = new ForgingHammer();
         _ = new ForgingHammerPool();
-        BusyCampfireHatchPatches.RegisterSaveFields();
-        ModConfig.Load<SpireConfig>();
+        ModConfig.Load<BusyCampfireConfig>();
         RuntimeMode = new RuntimeModeCoordinator();
-        Modules = new ModuleManager(RuntimeMode);
 
         Harmony harmony = new(ModId);
         harmony.PatchAll();
-        Modules.InitializeAll();
         IsInitialized = true;
-        if (NGame.Instance != null)
-            GlobalStatusHud.Attach(NGame.Instance);
         Logger.Info("火堆更加忙碌已成功加载。");
     }
 }

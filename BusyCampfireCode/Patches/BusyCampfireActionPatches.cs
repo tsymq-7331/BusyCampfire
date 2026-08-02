@@ -39,7 +39,7 @@ internal static class BusyCampfireActionPatches
     private sealed class LimitedCloneRestSiteOption(Player owner) : CloneRestSiteOption(owner)
     {
         public override bool IsEnabled =>
-            GetState(Owner).Uses < Math.Max(1, SpireConfig.CloneUsesPerCampfire);
+            GetState(Owner).Uses < Math.Max(1, BusyCampfireConfig.CloneUsesPerCampfire);
 
         public override async Task<bool> OnSelect()
         {
@@ -94,7 +94,7 @@ internal static class BusyCampfireShopWeightPatches
             if (!Enabled)
                 return;
 
-            double tentWeight = Math.Max(1d, SpireConfig.TinyTentShopWeightMultiplier);
+            double tentWeight = Math.Max(1d, BusyCampfireConfig.TinyTentShopWeightMultiplier);
             if (tentWeight <= 1d)
                 return;
 

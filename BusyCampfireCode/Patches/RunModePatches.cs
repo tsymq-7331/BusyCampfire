@@ -28,7 +28,6 @@ internal static class RunModePatches
             MainFile.RuntimeMode.EnterMultiplayer(everyPeerConfirmedCompatible: true);
         }
 
-        MainFile.Modules.NotifyModeChanged();
         MainFile.Logger.Info($"本局运行模式：{MainFile.RuntimeMode.Current}");
     }
 
@@ -37,6 +36,5 @@ internal static class RunModePatches
     private static void AfterRunCleanUp()
     {
         MainFile.RuntimeMode.EnterSinglePlayer();
-        MainFile.Modules.NotifyModeChanged();
     }
 }

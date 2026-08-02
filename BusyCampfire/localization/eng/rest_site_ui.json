@@ -1,0 +1,8 @@
+{
+  "OPTION_LIFT.description": "Lift to gain [gold]1 additional Strength[/gold] at the start of combat. There is no total limit.",
+  "OPTION_KINDLE.description": "Kindle Pumpkin Candle for 5 more combats. Kindling while active also increases its Energy bonus by 1.",
+  "OPTION_CLONE.description": "Copy every card in your deck with [gold]Clone[/gold]. This may be used multiple times per Rest Site according to the mod setting.",
+  "OPTION_DIG.description": "Obtain a relic. After every player finishes the Rest Site, enter an additional normal event valid for the current Act.",
+  "OPTION_HATCH.description": "Hatch the Byrdonis Eggs in your deck. This can be done once per Rest Site, and the egg count determines the number of Byrdpip cards created.",
+  "OPTION_MEND.description": "Heal a teammate and trigger the healer's own Rest Site healing-reward relics."
+}

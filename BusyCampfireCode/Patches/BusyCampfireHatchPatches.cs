@@ -17,18 +17,8 @@ internal static class BusyCampfireHatchPatches
         new(_ => 0, "BusyCampfireHatchMultiplier");
 
     private static readonly Dictionary<Player, CampfireUseState> HatchUses = [];
-    private static bool _saveFieldsRegistered;
 
     private static bool Enabled => MainFile.IsInitialized && MainFile.RuntimeMode.GameplayChangesAllowed;
-
-    internal static void RegisterSaveFields()
-    {
-        if (_saveFieldsRegistered)
-            return;
-
-        HatchMultiplier.RegisterCustomSave();
-        _saveFieldsRegistered = true;
-    }
 
     [HarmonyPatch(typeof(CardPile), nameof(CardPile.AddInternal))]
     private static class EggAddedPatch

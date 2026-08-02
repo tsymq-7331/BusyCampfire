@@ -1,13 +1,19 @@
 using System.Runtime.CompilerServices;
 using BusyCampfire.BusyCampfireCode.Config;
+using Godot;
 using HarmonyLib;
+using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.RestSite;
 using MegaCrit.Sts2.Core.Events;
+using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Events;
 using MegaCrit.Sts2.Core.Models.Relics;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
+using MegaCrit.Sts2.Core.Multiplayer.Messages.Game.Sync;
+using MegaCrit.Sts2.Core.Nodes.Rooms;
+using MegaCrit.Sts2.Core.Nodes.Screens.Map;
 using MegaCrit.Sts2.Core.Random;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
@@ -23,12 +29,15 @@ namespace BusyCampfire.BusyCampfireCode.Patches;
 internal static class BusyCampfireDigPatches
 {
     private static EventModel? PendingEvent;
+    private static bool IsEnteringPendingEvent;
+    private static Task? PendingTransitionTask;
+    private static readonly HashSet<ulong> FinishedPlayers = [];
     private static readonly ConditionalWeakTable<Player, ShovelEventState> VisitedShovelEvents = new();
 
     private static bool Enabled =>
         MainFile.IsInitialized &&
         MainFile.RuntimeMode.GameplayChangesAllowed &&
-        SpireConfig.EnableDigEvents;
+        BusyCampfireConfig.EnableDigEvents;
 
     [HarmonyPatch(typeof(DigRestSiteOption), nameof(DigRestSiteOption.OnSelect))]
     private static class DigOnSelectPatch
@@ -40,26 +49,95 @@ internal static class BusyCampfireDigPatches
         }
     }
 
-    [HarmonyPatch(typeof(RestSiteSynchronizer), "AfterAllRestSitesCompleted")]
-    private static class RestSiteCompletionPatch
+    [HarmonyPatch(typeof(RestSiteSynchronizer), nameof(RestSiteSynchronizer.BeginRestSite))]
+    private static class RestSiteBeginPatch
     {
-        private static void Postfix(ref Task __result)
+        private static void Prefix()
         {
-            if (!Enabled || PendingEvent == null)
-            {
-                return;
-            }
-
-            EventModel selectedEvent = PendingEvent;
             PendingEvent = null;
-            __result = CompleteRestSiteAndEnterEvent(__result, selectedEvent);
+            PendingTransitionTask = null;
+            IsEnteringPendingEvent = false;
+            FinishedPlayers.Clear();
+        }
+    }
+
+    [HarmonyPatch(typeof(RestSiteSynchronizer), "HandleRestSiteSkippedMessage")]
+    private static class RemotePlayerFinishedPatch
+    {
+        private static void Postfix(ulong senderId)
+        {
+            FinishedPlayers.Add(senderId);
+            TryStartPendingEvent();
+        }
+    }
+
+    [HarmonyPatch(typeof(RestSiteSynchronizer), "OnPeerDisconnected")]
+    private static class DisconnectedPlayerFinishedPatch
+    {
+        private static void Postfix(ulong peerId)
+        {
+            FinishedPlayers.Add(peerId);
+            TryStartPendingEvent();
+        }
+    }
+
+    [HarmonyPatch(typeof(RunManager), nameof(RunManager.EnterMapCoord))]
+    private static class NextMapRoomPatch
+    {
+        private static bool Prefix(ref Task __result)
+        {
+            if (!Enabled || (PendingEvent == null && !IsEnteringPendingEvent))
+                return true;
+
+            // A pending shovel event must finish before any selected map node
+            // can be recorded or entered. Players can return from the map and
+            // explicitly finish their campfire using the added button.
+            __result = AllPlayersExplicitlyFinished()
+                ? EnsurePendingEventTransition()
+                : Task.CompletedTask;
+            return false;
+        }
+    }
+
+    [HarmonyPatch(typeof(NRestSiteRoom), nameof(NRestSiteRoom._Ready))]
+    private static class RestSiteFinishButtonPatch
+    {
+        private const string ButtonName = "BusyCampfireFinishButton";
+
+        private static void Postfix(NRestSiteRoom __instance)
+        {
+            if (__instance.HasNode(ButtonName))
+                return;
+
+            Button button = new()
+            {
+                Name = ButtonName,
+                Text = "结束火堆",
+                AnchorLeft = 1f,
+                AnchorTop = 1f,
+                AnchorRight = 1f,
+                AnchorBottom = 1f,
+                OffsetLeft = -610f,
+                OffsetTop = -145f,
+                OffsetRight = -390f,
+                OffsetBottom = -75f,
+                FocusMode = Control.FocusModeEnum.All
+            };
+            button.AddThemeFontSizeOverride("font_size", 28);
+            button.Pressed += () => FinishLocalCampfire(__instance, button);
+            __instance.AddChild(button);
         }
     }
 
     [HarmonyPatch(typeof(RunManager), nameof(RunManager.CleanUp))]
     private static class RunCleanupPatch
     {
-        private static void Postfix() => PendingEvent = null;
+        private static void Postfix()
+        {
+            PendingEvent = null;
+            IsEnteringPendingEvent = false;
+            PendingTransitionTask = null;
+        }
     }
 
     private static async Task<bool> CompleteAndChooseEvent(
@@ -74,7 +152,7 @@ internal static class BusyCampfireDigPatches
         if (owner.RunState is not RunState runState)
             return true;
 
-        if (owner.RunState.Players.Count > 1 && !SpireConfig.EnableDigEventsInMultiplayer)
+        if (owner.RunState.Players.Count > 1 && !BusyCampfireConfig.EnableDigEventsInMultiplayer)
             return true;
 
         ShovelEventState shovelState = GetShovelState(owner);
@@ -105,14 +183,80 @@ internal static class BusyCampfireDigPatches
         return true;
     }
 
-    private static async Task CompleteRestSiteAndEnterEvent(
-        Task originalCompletion,
-        EventModel selectedEvent)
+    private static void FinishLocalCampfire(NRestSiteRoom room, Button button)
     {
-        await originalCompletion;
-        await RunManager.Instance.EnterRoomWithoutExitingCurrentRoom(
-            new EventRoom(selectedEvent),
-            fadeToBlack: true);
+        RestSiteSynchronizer synchronizer = RunManager.Instance.RestSiteSynchronizer;
+        var runState = RunManager.Instance.DebugOnlyGetState();
+        Player? localPlayer = runState == null ? null : LocalContext.GetMe(runState);
+        if (localPlayer == null || !FinishedPlayers.Add(localPlayer.NetId))
+            return;
+
+        synchronizer.BeforeLocalRestSiteExited();
+        room.DisableOptions();
+        button.Disabled = true;
+        button.Text = "等待其他玩家…";
+
+        if (localPlayer.RunState.Players.Count > 1)
+        {
+            RunLocationTargetedMessageBuffer messageBuffer = Traverse.Create(synchronizer)
+                .Field("_messageBuffer")
+                .GetValue<RunLocationTargetedMessageBuffer>();
+            RunManager.Instance.NetService.SendMessage(new RestSiteSkippedMessage
+            {
+                Location = messageBuffer.CurrentLocation
+            });
+        }
+
+        TryStartPendingEvent();
+        if (PendingEvent != null || IsEnteringPendingEvent)
+            return;
+
+        // Without a shovel event, this is simply an explicit vanilla skip.
+        NMapScreen.Instance?.Open();
+    }
+
+    private static bool AllPlayersExplicitlyFinished()
+    {
+        var runState = RunManager.Instance.DebugOnlyGetState();
+        return runState != null && runState.Players.All(player => FinishedPlayers.Contains(player.NetId));
+    }
+
+    private static void TryStartPendingEvent()
+    {
+        if (PendingEvent != null && AllPlayersExplicitlyFinished())
+            _ = TaskHelper.RunSafely(EnsurePendingEventTransition());
+    }
+
+    private static Task EnsurePendingEventTransition()
+    {
+        if (PendingTransitionTask != null)
+            return PendingTransitionTask;
+
+        PendingTransitionTask = WaitForPartyAndEnterPendingEvent();
+        return PendingTransitionTask;
+    }
+
+    private static async Task WaitForPartyAndEnterPendingEvent()
+    {
+        await RunManager.Instance.RestSiteSynchronizer.AfterAllRestSitesCompleted();
+
+        EventModel? selectedEvent = PendingEvent;
+        if (selectedEvent == null)
+            return;
+
+        PendingEvent = null;
+        IsEnteringPendingEvent = true;
+        try
+        {
+            await RunManager.Instance.EnterRoomWithoutExitingCurrentRoom(
+                new EventRoom(selectedEvent),
+                fadeToBlack: true);
+        }
+        finally
+        {
+            IsEnteringPendingEvent = false;
+            PendingTransitionTask = null;
+        }
     }
 
     private static ShovelEventState GetShovelState(Player player)

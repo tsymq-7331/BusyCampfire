@@ -7,7 +7,7 @@ internal static class CampfireTestLog
 {
     internal static void Write(Player player, string action, string details)
     {
-        if (!SpireConfig.EnableDetailedTestLogs)
+        if (!BusyCampfireConfig.EnableDetailedTestLogs)
             return;
 
         int playerIndex = player.RunState.Players.ToList().IndexOf(player) + 1;

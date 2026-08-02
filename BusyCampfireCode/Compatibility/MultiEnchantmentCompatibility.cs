@@ -37,7 +37,7 @@ internal static class MultiEnchantmentCompatibility
         return result;
     }
 
-    internal static bool TryEnchant(CardModel card, EnchantmentModel enchantment)
+    internal static bool TryEnchant(CardModel card, EnchantmentModel enchantment, int amount)
     {
         Type? apiType = ApiType;
         MethodInfo? enchant = apiType?.GetMethods(BindingFlags.Public | BindingFlags.Static)
@@ -47,6 +47,6 @@ internal static class MultiEnchantmentCompatibility
                 parameters[0].ParameterType == typeof(CardModel) &&
                 parameters[1].ParameterType == typeof(EnchantmentModel));
 
-        return enchant?.Invoke(null, [card, enchantment, 1m, null]) is EnchantmentModel;
+        return enchant?.Invoke(null, [card, enchantment, (decimal)amount, null]) is EnchantmentModel;
     }
 }

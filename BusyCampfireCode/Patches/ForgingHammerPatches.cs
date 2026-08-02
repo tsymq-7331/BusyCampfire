@@ -46,48 +46,63 @@ internal static class ForgingHammerPatches
                 continue;
 
             HashSet<Type> attachedTypes = MultiEnchantmentCompatibility.GetAttachedEnchantmentTypes(card);
-            List<EnchantmentModel> candidates = CreateVanillaCandidates()
-                .Where(enchantment => !attachedTypes.Contains(enchantment.GetType()))
-                .Where(enchantment => enchantment.CanEnchant(card))
+            List<VanillaEnchantmentCandidate> candidates = CreateVanillaCandidates()
+                .Where(candidate => !attachedTypes.Contains(candidate.Enchantment.GetType()))
+                .Where(candidate => candidate.Enchantment.CanEnchant(card))
                 .ToList();
             if (candidates.Count == 0)
                 continue;
 
-            EnchantmentModel chosen = candidates[owner.RunState.Rng.Niche.NextInt(candidates.Count)];
+            VanillaEnchantmentCandidate candidate =
+                candidates[owner.RunState.Rng.Niche.NextInt(candidates.Count)];
+            EnchantmentModel chosen = candidate.Enchantment;
+            int amount = candidate.VanillaAmounts[
+                owner.RunState.Rng.Niche.NextInt(candidate.VanillaAmounts.Length)];
             bool applied = alreadyEnchanted
-                ? MultiEnchantmentCompatibility.TryEnchant(card, chosen)
-                : ApplyVanillaEnchantment(card, chosen);
+                ? MultiEnchantmentCompatibility.TryEnchant(card, chosen, amount)
+                : ApplyVanillaEnchantment(card, chosen, amount);
             if (applied)
             {
                 hammer.Flash();
-                CampfireTestLog.Write(owner, "ForgingHammer/锻造锤", $"Card={card.Id.Entry}, Enchantment={chosen.Id.Entry}, Multi={alreadyEnchanted}");
+                CampfireTestLog.Write(owner, "ForgingHammer/锻造锤", $"Card={card.Id.Entry}, Enchantment={chosen.Id.Entry}, Amount={amount}, Multi={alreadyEnchanted}");
             }
         }
 
         return true;
     }
 
-    private static bool ApplyVanillaEnchantment(CardModel card, EnchantmentModel enchantment)
+    private static bool ApplyVanillaEnchantment(
+        CardModel card,
+        EnchantmentModel enchantment,
+        int amount)
     {
-        CardCmd.Enchant(enchantment, card, 1);
+        CardCmd.Enchant(enchantment, card, amount);
         return true;
     }
 
-    private static IEnumerable<EnchantmentModel> CreateVanillaCandidates()
+    private static IEnumerable<VanillaEnchantmentCandidate> CreateVanillaCandidates()
     {
-        yield return ModelDb.Enchantment<Adroit>().ToMutable();
-        yield return ModelDb.Enchantment<Glam>().ToMutable();
-        yield return ModelDb.Enchantment<Imbued>().ToMutable();
-        yield return ModelDb.Enchantment<Instinct>().ToMutable();
-        yield return ModelDb.Enchantment<Momentum>().ToMutable();
-        yield return ModelDb.Enchantment<Nimble>().ToMutable();
-        yield return ModelDb.Enchantment<PerfectFit>().ToMutable();
-        yield return ModelDb.Enchantment<RoyallyApproved>().ToMutable();
-        yield return ModelDb.Enchantment<Sharp>().ToMutable();
-        yield return ModelDb.Enchantment<Slither>().ToMutable();
-        yield return ModelDb.Enchantment<Spiral>().ToMutable();
-        yield return ModelDb.Enchantment<Steady>().ToMutable();
-        yield return ModelDb.Enchantment<Swift>().ToMutable();
-        yield return ModelDb.Enchantment<Vigorous>().ToMutable();
+        yield return Candidate<Adroit>(3);
+        yield return Candidate<Glam>(1);
+        yield return Candidate<Imbued>(1);
+        yield return Candidate<Instinct>(1);
+        yield return Candidate<Momentum>(5);
+        yield return Candidate<Nimble>(2);
+        yield return Candidate<PerfectFit>(1);
+        yield return Candidate<RoyallyApproved>(1);
+        yield return Candidate<Sharp>(2, 3);
+        yield return Candidate<Slither>(1);
+        yield return Candidate<Spiral>(1);
+        yield return Candidate<Steady>(1);
+        yield return Candidate<Swift>(1, 2);
+        yield return Candidate<Vigorous>(8);
     }
+
+    private static VanillaEnchantmentCandidate Candidate<T>(params int[] vanillaAmounts)
+        where T : EnchantmentModel =>
+        new(ModelDb.Enchantment<T>().ToMutable(), vanillaAmounts);
+
+    private sealed record VanillaEnchantmentCandidate(
+        EnchantmentModel Enchantment,
+        int[] VanillaAmounts);
 }
