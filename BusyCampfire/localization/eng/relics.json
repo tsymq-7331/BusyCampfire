@@ -4,11 +4,11 @@
   "ETERNAL_FEATHER.description": "When entering a [gold]Rest Site[/gold], heal [gold]5 HP[/gold] for every 5 cards in your deck.",
   "GIRYA.description": "You may Lift at every [gold]Rest Site[/gold]. Each Lift grants [gold]1 Strength[/gold] at the start of combat, with no total limit.",
   "PUMPKIN_CANDLE.description": "Kindle at a [gold]Rest Site[/gold] to gain extra Energy for 5 combats. Kindling while active extends the duration and permanently increases the Energy bonus by 1; the bonus resets when extinguished.",
-  "PAELS_GROWTH.description": "On pickup, add [gold]Clone[/gold] to a card. At [gold]Rest Sites[/gold], copy every card with Clone; it may be used multiple times per Rest Site according to the mod setting.",
+  "PAELS_GROWTH.description": "On pickup, add [gold]Clone[/gold] to a card. At [gold]Rest Sites[/gold], copy every card with Clone.",
   "MINIATURE_TENT.description": "Completing an option at a [gold]Rest Site[/gold] does not force the remaining options to end, allowing additional activities.",
   "REGAL_PILLOW.description": "Improves healing when Resting or actively healing a teammate at a [gold]Rest Site[/gold].",
   "TINY_MAILBOX.description": "Gain potion rewards after Resting or actively healing a teammate at a [gold]Rest Site[/gold].",
   "DREAM_CATCHER.description": "Gain a card reward after Resting or actively healing a teammate at a [gold]Rest Site[/gold].",
   "STONE_HUMIDIFIER.description": "Gain [gold]5 Max HP[/gold] after Resting or actively healing a teammate at a [gold]Rest Site[/gold].",
-  "SHOVEL.description": "You may Dig at [gold]Rest Sites[/gold] to obtain a relic. After every player finishes, enter an additional normal event valid for the current Act."
+  "SHOVEL.description": "You may Dig at [gold]Rest Sites[/gold] to obtain a relic."
 }

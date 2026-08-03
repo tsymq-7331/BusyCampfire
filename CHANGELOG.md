@@ -1,5 +1,21 @@
 # 更新日志 / Changelog
 
+## v0.9.7-alpha
+
+### 中文
+
+- 移除铲子挖掘后的额外事件与自定义“结束火堆”流程，恢复原版挖掘奖励和原版多人房间切换，以消除黑屏与同步风险。
+- 移除 MultiEnchantmentMod 的特殊兼容层，避免兼容异常破坏原版锻造流程。
+- 锻造锤现在只在正常锻造未附魔牌后添加一个原版附魔。
+- 修复兼容异常导致锻造选项未被消耗、可以在同一营火无限锻造的问题。
+
+### English
+
+- Removed the extra post-Dig event and custom Finish Campfire flow, restoring vanilla Dig rewards and multiplayer room transitions to eliminate black-screen and desync risks.
+- Removed the special MultiEnchantmentMod integration to prevent compatibility failures from breaking vanilla Smithing.
+- Forging Hammer now adds one vanilla enchantment only after normally Smithing an unenchanted card.
+- Fixed the Smith option remaining available indefinitely after a compatibility exception.
+
 ## v0.9.6-alpha
 
 ### 中文

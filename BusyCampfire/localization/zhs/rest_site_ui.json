@@ -1,8 +1,8 @@
 {
   "OPTION_LIFT.description": "锻炼并使你在战斗开始时多获得[gold]1点力量[/gold]。没有总次数上限。",
   "OPTION_KINDLE.description": "为南瓜蜡烛添火，增加5场持续次数。效果存续期间再次添火还会使每场战斗的额外能量增加1点。",
-  "OPTION_CLONE.description": "复制牌组中所有带有[gold]克隆[/gold]的牌；同一营火可按模组设置使用多次。",
-  "OPTION_DIG.description": "获得一件遗物。所有玩家结束火堆后，额外进入一个符合当前幕条件的普通事件。",
+  "OPTION_CLONE.description": "复制牌组中所有带有[gold]克隆[/gold]的牌。",
+  "OPTION_DIG.description": "获得一件遗物。",
   "OPTION_HATCH.description": "孵化牌组中的异鸟宝宝蛋；每个营火最多孵化一次，蛋的数量决定产生的异鸟侍从数量。",
   "OPTION_MEND.description": "治疗一名队友，并触发治疗者自己的营火治疗奖励遗物。"
 }

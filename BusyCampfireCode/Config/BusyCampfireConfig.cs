@@ -8,16 +8,14 @@ namespace BusyCampfire.BusyCampfireCode.Config;
 /// </summary>
 internal sealed class BusyCampfireConfig : SimpleModConfig
 {
+    public const double MultiplayerTinyTentShopWeightMultiplier = 3.0;
+
     [ConfigSection("General")]
     public static bool EnableMod { get; set; } = true;
 
     [ConfigSection("BusyCampfire")]
-    [ConfigSlider(1, 4, 1)]
-    public static int CloneUsesPerCampfire { get; set; } = 2;
     [ConfigSlider(1, 10, 0.5)]
     public static double TinyTentShopWeightMultiplier { get; set; } = 3.0;
-    public static bool EnableDigEvents { get; set; } = true;
-    public static bool EnableDigEventsInMultiplayer { get; set; } = true;
     public static bool EnableDetailedTestLogs { get; set; } = true;
 
     [ConfigSection("Diagnostics")]

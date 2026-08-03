@@ -68,6 +68,7 @@ public sealed class BusyCampfireTestConsoleCmd : AbstractConsoleCmd
         yield return ModelDb.Relic<TinyMailbox>();
         yield return ModelDb.Relic<DreamCatcher>();
         yield return ModelDb.Relic<StoneHumidifier>();
+        yield return ModelDb.Relic<MeatCleaver>();
         yield return ModelDb.Relic<Shovel>();
         yield return ModelDb.Relic<ForgingHammer>();
     }

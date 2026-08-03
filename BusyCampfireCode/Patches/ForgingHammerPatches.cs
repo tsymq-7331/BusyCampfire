@@ -1,4 +1,3 @@
-using BusyCampfire.BusyCampfireCode.Compatibility;
 using BusyCampfire.BusyCampfireCode.Relics;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Commands;
@@ -41,13 +40,10 @@ internal static class ForgingHammerPatches
 
         foreach (CardModel card in selection ?? [])
         {
-            bool alreadyEnchanted = card.Enchantment != null;
-            if (alreadyEnchanted && !MultiEnchantmentCompatibility.IsAvailable)
+            if (card.Enchantment != null)
                 continue;
 
-            HashSet<Type> attachedTypes = MultiEnchantmentCompatibility.GetAttachedEnchantmentTypes(card);
             List<VanillaEnchantmentCandidate> candidates = CreateVanillaCandidates()
-                .Where(candidate => !attachedTypes.Contains(candidate.Enchantment.GetType()))
                 .Where(candidate => candidate.Enchantment.CanEnchant(card))
                 .ToList();
             if (candidates.Count == 0)
@@ -58,25 +54,11 @@ internal static class ForgingHammerPatches
             EnchantmentModel chosen = candidate.Enchantment;
             int amount = candidate.VanillaAmounts[
                 owner.RunState.Rng.Niche.NextInt(candidate.VanillaAmounts.Length)];
-            bool applied = alreadyEnchanted
-                ? MultiEnchantmentCompatibility.TryEnchant(card, chosen, amount)
-                : ApplyVanillaEnchantment(card, chosen, amount);
-            if (applied)
-            {
-                hammer.Flash();
-                CampfireTestLog.Write(owner, "ForgingHammer/锻造锤", $"Card={card.Id.Entry}, Enchantment={chosen.Id.Entry}, Amount={amount}, Multi={alreadyEnchanted}");
-            }
+            CardCmd.Enchant(chosen, card, amount);
+            hammer.Flash();
+            CampfireTestLog.Write(owner, "ForgingHammer/锻造锤", $"Card={card.Id.Entry}, Enchantment={chosen.Id.Entry}, Amount={amount}");
         }
 
-        return true;
-    }
-
-    private static bool ApplyVanillaEnchantment(
-        CardModel card,
-        EnchantmentModel enchantment,
-        int amount)
-    {
-        CardCmd.Enchant(enchantment, card, amount);
         return true;
     }
 

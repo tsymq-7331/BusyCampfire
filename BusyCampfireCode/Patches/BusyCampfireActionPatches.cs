@@ -1,81 +1,14 @@
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Entities.Players;
-using MegaCrit.Sts2.Core.Entities.RestSite;
 using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Relics;
 using MegaCrit.Sts2.Core.Random;
 using MegaCrit.Sts2.Core.Runs;
 using BusyCampfire.BusyCampfireCode.Config;
+using BusyCampfire.BusyCampfireCode.Runtime;
 
 namespace BusyCampfire.BusyCampfireCode.Patches;
-
-/// <summary>
-/// Per-campfire action accounting. The game already owns the authoritative
-/// rest-site option list; replacing only the clone option keeps the native
-/// synchronization and visual effects intact.
-/// </summary>
-internal static class BusyCampfireActionPatches
-{
-    private static readonly Dictionary<Player, CloneUseState> CloneUses = [];
-    private static bool Enabled => MainFile.IsInitialized && MainFile.RuntimeMode.GameplayChangesAllowed;
-
-    [HarmonyPatch(typeof(RestSiteOption), nameof(RestSiteOption.Generate))]
-    private static class RestSiteOptionGenerationPatch
-    {
-        private static void Postfix(Player player, ref List<RestSiteOption> __result)
-        {
-            if (!Enabled)
-                return;
-
-            for (int index = 0; index < __result.Count; index++)
-            {
-                if (__result[index] is CloneRestSiteOption)
-                    __result[index] = new LimitedCloneRestSiteOption(player);
-            }
-        }
-    }
-
-    private sealed class LimitedCloneRestSiteOption(Player owner) : CloneRestSiteOption(owner)
-    {
-        public override bool IsEnabled =>
-            GetState(Owner).Uses < Math.Max(1, BusyCampfireConfig.CloneUsesPerCampfire);
-
-        public override async Task<bool> OnSelect()
-        {
-            if (!IsEnabled)
-                return false;
-
-            bool succeeded = await base.OnSelect();
-            if (succeeded)
-            {
-                CloneUseState state = GetState(Owner);
-                CloneUses[Owner] = state with { Uses = state.Uses + 1 };
-            }
-            return succeeded;
-        }
-    }
-
-    private static CloneUseState GetState(Player player)
-    {
-        CloneUseState current = new(
-            player.RunState.CurrentActIndex,
-            player.RunState.TotalFloor,
-            Uses: 0);
-
-        if (!CloneUses.TryGetValue(player, out CloneUseState saved) ||
-            saved.ActIndex != current.ActIndex ||
-            saved.TotalFloor != current.TotalFloor)
-        {
-            CloneUses[player] = current;
-            return current;
-        }
-
-        return saved;
-    }
-
-    private readonly record struct CloneUseState(int ActIndex, int TotalFloor, int Uses);
-}
 
 /// <summary>
 /// Reorders only the shop-rarity relic deque with a weighted, deterministic
@@ -94,7 +27,13 @@ internal static class BusyCampfireShopWeightPatches
             if (!Enabled)
                 return;
 
-            double tentWeight = Math.Max(1d, BusyCampfireConfig.TinyTentShopWeightMultiplier);
+            // Local config files are not synchronized between peers. Multiplayer
+            // therefore always uses one fixed value so every peer consumes RNG in
+            // exactly the same way; the slider is intentionally single-player only.
+            double configuredWeight = MainFile.RuntimeMode.Current == RuntimeMode.SinglePlayerFull
+                ? BusyCampfireConfig.TinyTentShopWeightMultiplier
+                : BusyCampfireConfig.MultiplayerTinyTentShopWeightMultiplier;
+            double tentWeight = Math.Max(1d, configuredWeight);
             if (tentWeight <= 1d)
                 return;
 

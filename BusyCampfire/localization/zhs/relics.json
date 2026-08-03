@@ -4,11 +4,11 @@
   "ETERNAL_FEATHER.description": "进入[gold]营火[/gold]时，牌组中每有5张牌，回复[gold]5点生命[/gold]。",
   "GIRYA.description": "可在每个[gold]营火[/gold]进行锻炼。每次锻炼使你在战斗开始时多获得[gold]1点力量[/gold]，没有总次数上限。",
   "PUMPKIN_CANDLE.description": "可在[gold]营火[/gold]添火，使接下来5场战斗获得额外能量。效果存续期间再次添火会延长持续次数，并使每场战斗的额外能量永久增加1点；熄灭后加成清零。",
-  "PAELS_GROWTH.description": "拾取时为一张牌添加[gold]克隆[/gold]。在[gold]营火[/gold]可复制所有带有克隆的牌，同一营火可按模组设置使用多次。",
+  "PAELS_GROWTH.description": "拾取时为一张牌添加[gold]克隆[/gold]。在[gold]营火[/gold]可复制所有带有克隆的牌。",
   "MINIATURE_TENT.description": "在[gold]营火[/gold]完成一个选项后，不会强制结束剩余选项，可以继续进行其他活动。",
   "REGAL_PILLOW.description": "在[gold]营火[/gold]休息或主动治疗队友时，提高对应的治疗效果。",
   "TINY_MAILBOX.description": "在[gold]营火[/gold]休息或主动治疗队友后，获得药水奖励。",
   "DREAM_CATCHER.description": "在[gold]营火[/gold]休息或主动治疗队友后，获得卡牌奖励。",
   "STONE_HUMIDIFIER.description": "在[gold]营火[/gold]休息或主动治疗队友后，获得[gold]5点最大生命[/gold]。",
-  "SHOVEL.description": "可在[gold]营火[/gold]挖掘：获得一件遗物。所有玩家结束火堆后，额外进入一个符合当前幕条件的普通事件。"
+  "SHOVEL.description": "可在[gold]营火[/gold]挖掘，获得一件遗物。"
 }
